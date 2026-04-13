@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IIM Rohtak — Tutor Feedback</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  :root {
+    --bg: #f0f4f8; 
+    --surface: #ffffff;
+    --surface-hover: #f8fafc;
+    --border: #e2e8f0;
+    --accent: #2563eb; 
+    --accent-light: #3b82f6;
+    --accent-dim: rgba(37, 99, 235, 0.1);
+    --text: #1e293b; 
+    --muted: #64748b;
+    --green: #059669;
+    --amber: #b45309;
+    --red: #dc2626;
+    --green-bg: #d1fae5;
+    --amber-bg: #fef3c7;
+    --red-bg: #fee2e2;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 2.5rem 2rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: -60px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, var(--accent-dim) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .logo-tag {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .logo-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .logo-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .header-stats {
+    display: flex;
+    gap: 2rem;
+  }
+  .h-stat { text-align: right; }
+  .h-stat-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .h-stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500;}
+
+  /* FILTER BAR */
+  .filter-bar {
+    max-width: 1200px;
+    margin: 1.5rem auto 0;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .filter-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .filter-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  
+  select.filter-select {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    cursor: pointer;
+  }
+  select.filter-select:hover { border-color: var(--accent-light); }
+
+  /* MAIN */
+  .main {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem 4rem;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 4rem;
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+  /* TUTOR SECTION */
+  .tutor-block {
+    margin-bottom: 2.5rem;
+    animation: fadeUp 0.4s ease both;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    border-radius: 12px;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .tutor-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px 12px 0 0;
+    border-bottom: none;
+  }
+  .avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 18px; font-weight: 700;
+    flex-shrink: 0;
+    color: #fff;
+  }
+  .tutor-info { flex: 1; }
+  .tutor-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .tutor-meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .tutor-avg { text-align: right; }
+  .avg-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .avg-label { font-size: 11px; color: var(--muted); margin-top: 4px; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  /* RATING STAR BAR */
+  .rating-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .star { font-size: 14px; }
+  .star.filled { color: #f59e0b; }
+  .star.half { color: #f59e0b; opacity: 0.5; }
+  .star.empty { color: var(--border); }
+
+  /* SESSIONS TABLE */
+  .sessions-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+  }
+  .session-item {
+    border-bottom: 1px solid var(--border);
+  }
+  .session-item:last-child {
+    border-bottom: none;
+  }
+  
+  .session-row {
+    display: grid;
+    grid-template-columns: 2fr 100px 90px 100px 120px 40px;
+    align-items: center;
+    padding: 14px 1.5rem;
+    gap: 1rem;
+    transition: background 0.15s;
+    cursor: pointer;
+    background: var(--surface);
+  }
+  .session-row:hover { background: var(--surface-hover); }
+  .session-row.header-row {
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+    padding: 10px 1.5rem;
+    background: #f8fafc;
+    cursor: default;
+  }
+  .session-row.header-row:hover { background: #f8fafc; }
+  
+  .s-name { font-size: 14px; color: var(--text); line-height: 1.4; font-weight: 500; }
+  .s-date { font-size: 13px; color: var(--muted); }
+  .s-rating-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .pill-green { background: var(--green-bg); color: var(--green); }
+  .pill-amber { background: var(--amber-bg); color: var(--amber); }
+  .pill-red   { background: var(--red-bg);   color: var(--red); }
+  .s-num { font-size: 13px; color: var(--muted); }
+  .s-below { font-size: 12px; }
+  .below-ok   { color: var(--green); font-weight: 600;}
+  .below-warn { color: var(--amber); font-weight: 600;}
+  .below-bad  { color: var(--red); font-weight: 600;}
+  
+  .chevron {
+    color: var(--muted);
+    transition: transform 0.2s;
+    text-align: right;
+  }
+  .session-item.open .chevron {
+    transform: rotate(180deg);
+  }
+
+  /* SATISFACTION MINI BAR */
+  .sat-bar { display: flex; align-items: center; gap: 8px; }
+  .sat-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;}
+  .sat-fill { height: 100%; border-radius: 3px; display: block; }
+  .sat-pct { font-size: 12px; color: var(--muted); min-width: 32px; text-align: right; font-weight: 600; }
+
+  /* FEEDBACK DETAILS */
+  .session-details {
+    display: none;
+    padding: 1.5rem;
+    background: var(--bg);
+    border-top: 1px dashed var(--border);
+    gap: 1.5rem;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .session-item.open .session-details {
+    display: grid;
+    animation: fadeDown 0.3s ease;
+  }
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .feedback-box {
+    background: var(--surface);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  }
+  .feedback-box h4 {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+  }
+  .feedback-box p {
+    font-size: 13px;
+    color: var(--text);
+    white-space: pre-line;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 860px) {
+    .session-row { grid-template-columns: 1fr 80px 70px 40px; }
+    .session-row > *:nth-child(4),
+    .session-row > *:nth-child(5) { display: none; }
+    .session-details { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .header-stats { display:none; }
+    .filter-bar { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo-block">
+      <div class="logo-tag">IIM Rohtak &mdash; Session Feedback Report</div>
+      <div class="logo-title">Tutor-wise Feedback</div>
+      <div class="logo-sub">Qualitative & Quantitative Insights</div>
+    </div>
+    <div class="header-stats">
+      <div class="h-stat">
+        <div class="h-stat-val" id="stat-tutors">-</div>
+        <div class="h-stat-label">Tutors</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-stat-val" id="stat-sessions">-</div>
+        <div class="h-stat-label">Sessions</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-stat-val" id="stat-avg" style="color:var(--green);">-</div>
+        <div class="h-stat-label">Avg Rating</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <div class="filter-group">
+    <span class="filter-label">Batch:</span>
+    <button class="filter-btn active" data-batch="all">All</button>
+    <button class="filter-btn" data-batch="AIPPMGM">AIPPMGM</button>
+    <button class="filter-btn" data-batch="ADMAIS">ADMAIS</button>
+  </div>
+  
+  <div class="filter-group">
+    <span class="filter-label">Mentor:</span>
+    <select id="mentor-filter" class="filter-select">
+      <option value="all">All Mentors</option>
+    </select>
+  </div>
+
+  <div class="filter-group">
+    <span class="filter-label">Date:</span>
+    <select id="date-filter" class="filter-select">
+      <option value="all">All Dates</option>
+    </select>
+  </div>
+</div>
+
+<div class="main" id="main">
+  <div class="loading">Loading feedback data...</div>
+</div>
+
+<script>
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/16abjQmsbvbJD94JgbXNePemjPA1ngnYX93n9c84a2sQ/edit?usp=sharing';
+const PUBLISHED_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSrVr4H75m2KlDON37yKkBgQGLv1GejuUw29LOh4YBVmeMWFzdYtw8sFlxuPzMsa3uufZc6nKVLcsN7/pub?gid=0&single=true&output=csv';
+
+let allSessions = [];
+let currentBatch = 'all';
+let currentMentor = 'all';
+let currentDate = 'all';
+
+const avatarColors = ["#3b82f6", "#10b981", "#8b5cf6", "#f59e0b", "#ef4444", "#14b8a6", "#6366f1", "#f43f5e"];
+
+function initials(name) {
+  return name.replace(/^(Dr\.|Prof\.|Mr\.|Ms\.)\s*/i,'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+}
+
+function getAvatarColor(name) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return avatarColors[Math.abs(hash) % avatarColors.length];
+}
+
+function pillClass(r) {
+  if (r >= 4.5) return 'pill-green';
+  if (r >= 4.0) return 'pill-amber';
+  return 'pill-red';
+}
+
+function belowClass(pct) {
+  if (pct <= 5)  return 'below-ok';
+  if (pct <= 15) return 'below-warn';
+  return 'below-bad';
+}
+
+function satColor(pct) {
+  if (pct >= 90) return 'var(--green)';
+  if (pct >= 80) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+function stars(rating) {
+  let html = '';
+  for (let i = 1; i <= 5; i++) {
+    if (rating >= i) html += '<span class="star filled">★</span>';
+    else if (rating >= i - 0.5) html += '<span class="star half">★</span>';
+    else html += '<span class="star empty">★</span>';
+  }
+  return html;
+}
+
+function avgRatingColor(r) {
+  if (r >= 4.5) return 'var(--green)';
+  if (r >= 4.0) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+function toggleSession(el) {
+  el.parentElement.classList.toggle('open');
+}
+
+function render() {
+  const filtered = allSessions.filter(s => {
+    const matchBatch = currentBatch === 'all' || s.batch === currentBatch;
+    const matchMentor = currentMentor === 'all' || s.tutor === currentMentor;
+    const matchDate = currentDate === 'all' || s.date === currentDate;
+    return matchBatch && matchMentor && matchDate;
+  });
+
+  if (filtered.length === 0) {
+    document.getElementById('main').innerHTML = '<div class="loading">No sessions match your filters.</div>';
+    return;
+  }
+
+  // Group by tutor
+  const tutorMap = {};
+  filtered.forEach(s => {
+    if (!tutorMap[s.tutor]) tutorMap[s.tutor] = { tutor: s.tutor, batches: new Set(), sessions: [] };
+    tutorMap[s.tutor].batches.add(s.batch);
+    tutorMap[s.tutor].sessions.push(s);
+  });
+
+  const tutors = Object.values(tutorMap).sort((a,b) => {
+    const avgA = a.sessions.reduce((x,s)=>x+s.rating,0)/a.sessions.length;
+    const avgB = b.sessions.reduce((x,s)=>x+s.rating,0)/b.sessions.length;
+    return avgB - avgA;
+  });
+
+  // Stats
+  const totalSessions = filtered.length;
+  const totalTutors = tutors.length;
+  const overallAvg = filtered.length ? (filtered.reduce((x,s)=>x+s.rating,0)/filtered.length).toFixed(2) : '—';
+  
+  document.getElementById('stat-tutors').textContent = totalTutors;
+  document.getElementById('stat-sessions').textContent = totalSessions;
+  const avgEl = document.getElementById('stat-avg');
+  avgEl.textContent = overallAvg;
+  
+  if(overallAvg !== '—') {
+    const avgNum = parseFloat(overallAvg);
+    avgEl.style.color = avgNum >= 4.5 ? 'var(--green)' : avgNum >= 4.0 ? 'var(--amber)' : 'var(--red)';
+  }
+
+  let html = '';
+  tutors.forEach((t, i) => {
+    const avg = (t.sessions.reduce((x,s)=>x+s.rating,0)/t.sessions.length);
+    const avgStr = avg.toFixed(2);
+    const totalResp = t.sessions.reduce((x,s)=>x+s.responses,0);
+    const totalBelow = t.sessions.reduce((x,s)=>x+s.below4,0);
+    const batchStr = Array.from(t.batches).join(' · ');
+    const bgCol = getAvatarColor(t.tutor);
+
+    html += `<div class="tutor-block" style="animation-delay:${i*0.07}s">
+      <div class="tutor-header">
+        <div class="avatar" style="background:${bgCol}">${initials(t.tutor)}</div>
+        <div class="tutor-info">
+          <div class="tutor-name">${t.tutor}</div>
+          <div class="tutor-meta">${batchStr} &nbsp;·&nbsp; ${t.sessions.length} session${t.sessions.length > 1 ? 's' : ''} &nbsp;·&nbsp; ${totalResp} total responses</div>
+        </div>
+        <div class="tutor-avg">
+          <div class="avg-val" style="color:${avgRatingColor(avg)}">${avgStr}</div>
+          <div class="rating-bar" style="justify-content:flex-end;">${stars(avg)}</div>
+          <div class="avg-label">avg rating</div>
+        </div>
+      </div>
+      <div class="sessions-wrap">
+        <div class="session-row header-row">
+          <span>Session</span>
+          <span>Date</span>
+          <span style="text-align:center;">Rating</span>
+          <span style="text-align:center;">Responses</span>
+          <span>Satisfaction</span>
+          <span></span>
+        </div>`;
+
+    t.sessions.forEach(s => {
+      const sp = s.responses > 0 ? Math.round((1 - s.below4/s.responses)*100) : 0;
+      const belowPct = s.responses > 0 ? Math.round(s.below4/s.responses*100) : 0;
+      
+      html += `<div class="session-item">
+        <div class="session-row" onclick="toggleSession(this)">
+          <span class="s-name">${s.session}</span>
+          <span class="s-date">${s.date}</span>
+          <span style="text-align:center;"><span class="s-rating-pill ${pillClass(s.rating)}">${s.rating.toFixed(1)}</span></span>
+          <span class="s-num" style="text-align:center;">${s.responses} <span class="${belowClass(belowPct)}" style="font-size:11px;">(${s.below4} &lt;4)</span></span>
+          <span class="sat-bar">
+            <span class="sat-track"><span class="sat-fill" style="width:${sp}%;background:${satColor(sp)};"></span></span>
+            <span class="sat-pct">${sp}%</span>
+          </span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="session-details">
+          <div class="feedback-box">
+            <h4>What Went Well</h4>
+            <p>${s.well || 'No feedback provided.'}</p>
+          </div>
+          <div class="feedback-box">
+            <h4>What Can Be Improved</h4>
+            <p>${s.improved || 'No feedback provided.'}</p>
+          </div>
+          <div class="feedback-box">
+            <h4>Additional Comments</h4>
+            <p>${s.comments || 'No feedback provided.'}</p>
+          </div>
+        </div>
+      </div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  document.getElementById('main').innerHTML = html;
+}
+
+function processData(data) {
+  allSessions = data.filter(r => r.Batch && r.Instructor).map(r => ({
+    batch: r.Batch ? r.Batch.trim() : '',
+    tutor: r.Instructor ? r.Instructor.trim() : '',
+    session: r['Session Name'] ? r['Session Name'].trim() : '',
+    attendees: parseInt(r['Number of Attendees']) || 0,
+    rating: parseFloat(r['Average Rating']) || 0,
+    responses: parseInt(r['Total Responses']) || 0,
+    below4: parseInt(r['Responses Below 4']) || parseInt(r['Responses Below 1']) || 0,
+    date: r.Date ? r.Date.trim() : '',
+    well: r['What Went Well'] || '',
+    improved: r['What Can Be Improved'] || '',
+    comments: r['Additional Comments'] || ''
+  }));
+  
+  const mentors = [...new Set(allSessions.map(s => s.tutor))].filter(Boolean).sort();
+  const dates = [...new Set(allSessions.map(s => s.date))].filter(Boolean).sort((a, b) => new Date(a) - new Date(b));
+
+  const mentorSelect = document.getElementById('mentor-filter');
+  let mentorHtml = '<option value="all">All Mentors</option>';
+  mentors.forEach(m => mentorHtml += `<option value="${m}">${m}</option>`);
+  mentorSelect.innerHTML = mentorHtml;
+
+  const dateSelect = document.getElementById('date-filter');
+  let dateHtml = '<option value="all">All Dates</option>';
+  dates.forEach(d => dateHtml += `<option value="${d}">${d}</option>`);
+  dateSelect.innerHTML = dateHtml;
+
+  render();
+}
+
+function normalizeCsvUrl(url) {
+  if (!url) return '';
+  return url.trim().replace('output=csv-csv', 'output=csv');
+}
+
+function buildSheetCsvCandidates(sheetUrl) {
+  const cleanUrl = normalizeCsvUrl(sheetUrl);
+  if (!cleanUrl) return [];
+
+  const candidates = [cleanUrl];
+  let gid = '0';
+  const gidMatch = cleanUrl.match(/[?&]gid=(\d+)/i);
+  if (gidMatch) gid = gidMatch[1];
+
+  const idMatch = cleanUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (idMatch) {
+    const sheetId = idMatch[1];
+    candidates.push(`https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`);
+    candidates.push(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`);
+  }
+
+  return [...new Set(candidates)];
+}
+
+function parseCsvFromUrl(url) {
+  return new Promise((resolve, reject) => {
+    Papa.parse(url, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: function(header) {
+        return header.trim();
+      },
+      complete: function(results) {
+        if (results.errors && results.errors.length) {
+          reject(results.errors[0]);
+          return;
+        }
+        if (results.data && results.data.length > 0) {
+          resolve(results.data);
+          return;
+        }
+        reject(new Error('Empty CSV response'));
+      },
+      error: function(err) {
+        reject(err);
+      }
+    });
+  });
+}
+
+async function loadData() {
+  const candidateUrls = [
+    ...buildSheetCsvCandidates(PUBLISHED_CSV_URL),
+    ...buildSheetCsvCandidates(SHEET_URL)
+  ];
+
+  let lastError = null;
+  for (const url of candidateUrls) {
+    try {
+      const data = await parseCsvFromUrl(url);
+      processData(data);
+      return;
+    } catch (err) {
+      lastError = err;
+      console.warn('CSV load failed for URL:', url, err);
+    }
+  }
+
+  console.error('All CSV loading attempts failed:', lastError);
+  document.getElementById('main').innerHTML = '<div class="loading" style="color:var(--red)">Failed to load data from Google Sheets. Ensure the sheet is published or publicly accessible.</div>';
+}
+
+loadData();
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentBatch = btn.dataset.batch;
+    render();
+  });
+});
+
+document.getElementById('mentor-filter').addEventListener('change', e => {
+  currentMentor = e.target.value;
+  render();
+});
+
+document.getElementById('date-filter').addEventListener('change', e => {
+  currentDate = e.target.value;
+  render();
+});
+</script>
+</body>
+</html>
